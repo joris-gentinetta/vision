@@ -4,24 +4,30 @@ on:
 jobs:
   build_vision:
     runs-on: macos-m1
+    strategy:
+      matrix:
+        py_vers: [ "3.8", "3.9", "3.10" ]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Build TorchVision M1 wheel
         shell: arch -arch arm64 bash {0}
+        env:
+          ENV_NAME: conda-env-${{ github.run_id }}
+          PY_VERS: ${{ matrix.py_vers }}
         run: |
           echo $PATH
           . ~/miniconda3/etc/profile.d/conda.sh
           set -ex
-          conda create -yp conda-env python=3.8 numpy libpng openjpeg wheel pkg-config
-          conda run -p ./conda-env python3 -c "import os;print(os.__file__)"
-          conda env list
-          conda run -p conda-env python3 -mpip install torch --extra-index-url=https://download.pytorch.org/whl/nightly torch
-          conda run -p conda-env python3 -mpip install delocate
-          conda run -p conda-env python3 setup.py bdist_wheel
+          conda create -yp ${ENV_NAME} python=${PY_VERS} numpy libpng openjpeg wheel pkg-config
+          conda run -p ${ENV_NAME} python3 -c "import os;print(os.__file__)"
+          conda run -p ${ENV_NAME} python3 -mpip install torch --extra-index-url=https://download.pytorch.org/whl/nightly torch
+          conda run -p ${ENV_NAME} python3 -mpip install delocate
+          conda run -p ${ENV_NAME} python3 setup.py bdist_wheel
+          conda env remove -p ${ENV_NAME}
       - name: Upload TorchVision wheel
         uses: actions/upload-artifact@v3
         with:
-          name: torchvision-py3.8-macos11-m1
+          name: torchvision-py${{ matrix.py_vers }}-macos11-m1
           path: dist/
 
