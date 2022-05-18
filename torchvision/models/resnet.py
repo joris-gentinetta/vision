@@ -229,6 +229,11 @@ class ResNet(nn.Module):
 
     def _forward_impl(self, x: Tensor) -> Tensor:
         # See note [TorchScript super()]
+
+        from torch.nn.functional import interpolate
+        interpolate_mode = 'nearest'
+        image_shape = x.shape
+
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -241,9 +246,11 @@ class ResNet(nn.Module):
 
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
+        features = x
+
         x = self.fc(x)
 
-        return x
+        return x, features
 
     def forward(self, x: Tensor) -> Tensor:
         return self._forward_impl(x)
