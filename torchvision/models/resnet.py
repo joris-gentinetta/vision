@@ -233,24 +233,38 @@ class ResNet(nn.Module):
         from torch.nn.functional import interpolate
         interpolate_mode = 'nearest'
         image_shape = x.shape
+        feature_matrix = x.detach()
 
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
+        feature_matrix = torch.cat(
+            (feature_matrix, interpolate(x.detach(), size=(image_shape[2], image_shape[3]), mode=interpolate_mode)),
+            dim=1)
         x = self.maxpool(x)
 
         x = self.layer1(x)
+        feature_matrix = torch.cat(
+            (feature_matrix, interpolate(x.detach(), size=(image_shape[2], image_shape[3]), mode=interpolate_mode)),
+            dim=1)
         x = self.layer2(x)
+        feature_matrix = torch.cat(
+            (feature_matrix, interpolate(x.detach(), size=(image_shape[2], image_shape[3]), mode=interpolate_mode)),
+            dim=1)
         x = self.layer3(x)
+        feature_matrix = torch.cat(
+            (feature_matrix, interpolate(x.detach(), size=(image_shape[2], image_shape[3]), mode=interpolate_mode)),
+            dim=1)
         x = self.layer4(x)
+        feature_matrix = torch.cat(
+            (feature_matrix, interpolate(x.detach(), size=(image_shape[2], image_shape[3]), mode=interpolate_mode)),
+            dim=1)
 
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
-        features = x
-
         x = self.fc(x)
 
-        return x, features
+        return x, feature_matrix
 
     def forward(self, x: Tensor) -> Tensor:
         return self._forward_impl(x)

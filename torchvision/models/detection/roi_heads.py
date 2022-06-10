@@ -717,7 +717,7 @@ class RoIHeads(nn.Module):
             all_scores.append(scores)
             all_labels.append(labels)
 
-        return all_boxes, all_scores, all_labels
+        return all_boxes, all_scores, all_labels, keep // (num_classes - 1)
 
     def forward(self,
                 features,      # type: Dict[str, Tensor]
@@ -764,7 +764,7 @@ class RoIHeads(nn.Module):
                 "loss_box_reg": loss_box_reg
             }
         else:
-            boxes, scores, labels = self.postprocess_detections(class_logits, box_regression, proposals, image_shapes)
+            boxes, scores, labels, inds = self.postprocess_detections(class_logits, box_regression, proposals, image_shapes)
             num_images = len(boxes)
             for i in range(num_images):
                 result.append(
@@ -772,6 +772,7 @@ class RoIHeads(nn.Module):
                         "boxes": boxes[i],
                         "labels": labels[i],
                         "scores": scores[i],
+                        "features": box_features[inds],
                     }
                 )
 
